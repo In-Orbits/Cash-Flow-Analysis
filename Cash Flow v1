@@ -5,45 +5,38 @@ import { DollarSign, Filter, TrendingUp, CheckCircle } from 'lucide-react';
 const scenarios = [
   {
     id: "s1",
-    name: "35% Rigado | 1.5k Demand",
-    shortName: "35% / 1.5k / Stock Out CY28 Q4",
+    name: "35% Rigado | 1.5k Demand | Stock Out CY28 Q4",
+    shortName: "35% / 1.5k / Stock Out '28",
     color: "#2563eb", // Blue
-    data: [40, 40, 121, 121, 241, 241, 241, 241, 241, 241, 241, 341, 491]
-  },
-  {
-    id: "s6",
-    name: "75% Rigado | 1.5k Demand | No Risk Buy",
-    shortName: "75% / 1.5k / No Risk",
-    color: "#0891b2", // Cyan
-    data: [0, 0, 0, 0, 100, 368, 368, 486, 486, 604, 604, 662, 662]
-  },
-  {
-    id: "s4",
-    name: "35% Rigado | 1.75k Demand | No Risk Buy",
-    shortName: "35% / 1.75k / No Risk",
-    color: "#059669", // Emerald
-    data: [0, 0, 0, 0, 0, 100, 355, 355, 460, 460, 565, 565, 565]
+    data: [35, 35, 105, 105, 211, 211, 211, 211, 211, 211, 211, 311, 461]
   },
   {
     id: "s2",
-    name: "75% Rigado | 1.75k Demand | Stock Out CY28 Q4",
-    shortName: "75% / 1.75k / Stock Out CY28 Q4",
+    name: "70% Rigado | 1.5k Demand | Stock Out CY28 Q4",
+    shortName: "70% / 1.5k / Stock Out '28",
     color: "#dc2626", // Red
-    data: [74, 74, 223, 223, 445, 445, 445, 445, 445, 445, 445, 545, 695]
+    data: [56, 56, 168, 168, 337, 337, 337, 337, 337, 337, 337, 437, 587]
   },
   {
     id: "s3",
-    name: "75% Rigado | 1.75k Demand | Stock Out CY27 Q4",
-    shortName: "75% / 1.75k / Stock Out CY27 Q4",
+    name: "70% Rigado | 1.5k Demand | Stock Out CY27 Q4",
+    shortName: "70% / 1.5k / Stock Out '27",
     color: "#9333ea", // Purple
-    data: [31, 31, 93, 93, 186, 186, 186, 286, 566, 566, 695, 695, 695]
+    data: [15, 15, 44, 44, 89, 89, 89, 189, 471, 471, 603, 603, 603]
+  },
+  {
+    id: "s4",
+    name: "35% Rigado | 1.5k Demand | No Risk Buy",
+    shortName: "35% / 1.5k / No Risk",
+    color: "#059669", // Emerald
+    data: [0, 0, 0, 0, 0, 100, 250, 250, 360, 360, 461, 461, 461]
   },
   {
     id: "s5",
-    name: "75% Rigado | 1.75k Demand | No Risk Buy",
-    shortName: "75% / 1.75k / No Risk",
+    name: "70% Rigado | 1.5k Demand | No Risk Buy",
+    shortName: "70% / 1.5k / No Risk",
     color: "#d97706", // Amber
-    data: [0, 0, 0, 0, 100, 379, 379, 509, 509, 638, 638, 703, 703]
+    data: [0, 0, 0, 0, 100, 250, 250, 388, 388, 521, 521, 587, 587]
   }
 ];
 
@@ -55,7 +48,6 @@ const quarters = [
 ];
 
 export default function CashFlowComparison() {
-  // State to track which lines are visible. Default all true.
   const [visibility, setVisibility] = useState(
     scenarios.reduce((acc, s) => ({ ...acc, [s.id]: true }), {})
   );
@@ -68,12 +60,12 @@ export default function CashFlowComparison() {
     setVisibility(scenarios.reduce((acc, s) => ({ ...acc, [s.id]: state }), {}));
   };
 
-  // Transform data for Recharts (array of objects with quarter name and each scenario's value)
   const chartData = useMemo(() => {
     return quarters.map((q, idx) => {
       const point = { name: q };
       scenarios.forEach(s => {
-        point[s.id] = s.data[idx];
+        // Safe access in case data lengths vary slightly
+        point[s.id] = s.data[idx] !== undefined ? s.data[idx] : 0;
       });
       return point;
     });
@@ -81,7 +73,6 @@ export default function CashFlowComparison() {
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Sort payload by value descending for easier reading
       const sortedPayload = [...payload].sort((a, b) => b.value - a.value);
       
       return (
@@ -112,7 +103,6 @@ export default function CashFlowComparison() {
     <div className="p-6 bg-slate-50 min-h-screen font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -129,7 +119,6 @@ export default function CashFlowComparison() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
-          {/* Controls / Legend */}
           <div className="lg:col-span-1 space-y-4">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
               <div className="flex justify-between items-center mb-4">
@@ -184,10 +173,8 @@ export default function CashFlowComparison() {
                 ))}
               </div>
             </div>
-            
           </div>
 
-          {/* Main Chart */}
           <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-[600px] flex flex-col">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
@@ -198,6 +185,10 @@ export default function CashFlowComparison() {
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
                   dy={10}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis 
                   tick={{ fontSize: 11, fill: '#64748b' }} 
@@ -217,7 +208,7 @@ export default function CashFlowComparison() {
                       dataKey={s.id}
                       stroke={s.color}
                       strokeWidth={3}
-                      dot={{ r: 4, fill: '#fff', strokeWidth: 2 }}
+                      dot={{ r: 3, fill: '#fff', strokeWidth: 2 }}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                       animationDuration={1000}
                     />
