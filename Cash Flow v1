@@ -1,0 +1,233 @@
+import React, { useState, useMemo } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { DollarSign, Filter, TrendingUp, CheckCircle } from 'lucide-react';
+
+const scenarios = [
+  {
+    id: "s1",
+    name: "35% Rigado | 1.5k Demand",
+    shortName: "35% / 1.5k / Stock Out CY28 Q4",
+    color: "#2563eb", // Blue
+    data: [40, 40, 121, 121, 241, 241, 241, 241, 241, 241, 241, 341, 491]
+  },
+  {
+    id: "s6",
+    name: "75% Rigado | 1.5k Demand | No Risk Buy",
+    shortName: "75% / 1.5k / No Risk",
+    color: "#0891b2", // Cyan
+    data: [0, 0, 0, 0, 100, 368, 368, 486, 486, 604, 604, 662, 662]
+  },
+  {
+    id: "s4",
+    name: "35% Rigado | 1.75k Demand | No Risk Buy",
+    shortName: "35% / 1.75k / No Risk",
+    color: "#059669", // Emerald
+    data: [0, 0, 0, 0, 0, 100, 355, 355, 460, 460, 565, 565, 565]
+  },
+  {
+    id: "s2",
+    name: "75% Rigado | 1.75k Demand | Stock Out CY28 Q4",
+    shortName: "75% / 1.75k / Stock Out CY28 Q4",
+    color: "#dc2626", // Red
+    data: [74, 74, 223, 223, 445, 445, 445, 445, 445, 445, 445, 545, 695]
+  },
+  {
+    id: "s3",
+    name: "75% Rigado | 1.75k Demand | Stock Out CY27 Q4",
+    shortName: "75% / 1.75k / Stock Out CY27 Q4",
+    color: "#9333ea", // Purple
+    data: [31, 31, 93, 93, 186, 186, 186, 286, 566, 566, 695, 695, 695]
+  },
+  {
+    id: "s5",
+    name: "75% Rigado | 1.75k Demand | No Risk Buy",
+    shortName: "75% / 1.75k / No Risk",
+    color: "#d97706", // Amber
+    data: [0, 0, 0, 0, 100, 379, 379, 509, 509, 638, 638, 703, 703]
+  }
+];
+
+const quarters = [
+  'CY25 Q4',
+  'CY26 Q1', 'CY26 Q2', 'CY26 Q3', 'CY26 Q4',
+  'CY27 Q1', 'CY27 Q2', 'CY27 Q3', 'CY27 Q4',
+  'CY28 Q1', 'CY28 Q2', 'CY28 Q3', 'CY28 Q4'
+];
+
+export default function CashFlowComparison() {
+  // State to track which lines are visible. Default all true.
+  const [visibility, setVisibility] = useState(
+    scenarios.reduce((acc, s) => ({ ...acc, [s.id]: true }), {})
+  );
+
+  const toggleScenario = (id) => {
+    setVisibility(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleAll = (state) => {
+    setVisibility(scenarios.reduce((acc, s) => ({ ...acc, [s.id]: state }), {}));
+  };
+
+  // Transform data for Recharts (array of objects with quarter name and each scenario's value)
+  const chartData = useMemo(() => {
+    return quarters.map((q, idx) => {
+      const point = { name: q };
+      scenarios.forEach(s => {
+        point[s.id] = s.data[idx];
+      });
+      return point;
+    });
+  }, []);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Sort payload by value descending for easier reading
+      const sortedPayload = [...payload].sort((a, b) => b.value - a.value);
+      
+      return (
+        <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-lg text-xs">
+          <p className="font-bold text-gray-900 mb-2">{label}</p>
+          <div className="space-y-1">
+            {sortedPayload.map((entry, index) => (
+              <div key={index} className="flex items-center justify-between space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                  <span className="text-gray-600 font-medium">
+                    {scenarios.find(s => s.id === entry.dataKey)?.shortName}
+                  </span>
+                </div>
+                <span className="font-mono font-bold text-gray-900">
+                  ${Math.round(entry.value).toLocaleString()}k
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="p-6 bg-slate-50 min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <TrendingUp className="w-6 h-6 text-slate-700" />
+              Cumulative Cash Flow Analysis
+            </h1>
+            <p className="text-slate-500 mt-1">Comparing capital requirements across supply chain mitigation strategies.</p>
+          </div>
+          <div className="bg-slate-100 px-4 py-2 rounded-lg flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-slate-600" />
+            <span className="text-sm font-semibold text-slate-700">Unit: $000s</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          
+          {/* Controls / Legend */}
+          <div className="lg:col-span-1 space-y-4">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                  <Filter className="w-4 h-4" /> Scenarios
+                </h3>
+                <div className="flex gap-2 text-xs">
+                   <button 
+                     onClick={() => toggleAll(true)}
+                     className="text-blue-600 hover:text-blue-800 font-medium"
+                   >
+                     Select All
+                   </button>
+                   <span className="text-slate-300">|</span>
+                   <button 
+                     onClick={() => toggleAll(false)}
+                     className="text-slate-500 hover:text-slate-700"
+                   >
+                     Clear
+                   </button>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {scenarios.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => toggleScenario(s.id)}
+                    className={`w-full flex items-center p-2 rounded-lg border transition-all duration-200 text-left group ${
+                      visibility[s.id] 
+                        ? 'bg-slate-50 border-slate-200 shadow-sm' 
+                        : 'bg-white border-transparent hover:bg-slate-50 opacity-60'
+                    }`}
+                  >
+                    <div 
+                      className={`w-4 h-4 rounded flex items-center justify-center mr-3 transition-colors ${
+                        visibility[s.id] ? '' : 'bg-slate-200'
+                      }`}
+                      style={{ backgroundColor: visibility[s.id] ? s.color : undefined }}
+                    >
+                      {visibility[s.id] && <CheckCircle className="w-3 h-3 text-white" />}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-700 leading-tight">
+                        {s.shortName}
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        Max: ${Math.max(...s.data).toLocaleString()}k
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+          </div>
+
+          {/* Main Chart */}
+          <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-[600px] flex flex-col">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 11, fill: '#64748b' }} 
+                  axisLine={{ stroke: '#cbd5e1' }}
+                  tickLine={false}
+                  dy={10}
+                />
+                <YAxis 
+                  tick={{ fontSize: 11, fill: '#64748b' }} 
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value) => `$${value}k`}
+                  dx={-10}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <ReferenceLine x="CY27 Q1" stroke="#94a3b8" strokeDasharray="3 3" label={{ position: 'top', value: '2027 Start', fontSize: 10, fill: '#94a3b8' }} />
+                
+                {scenarios.map((s) => (
+                  visibility[s.id] && (
+                    <Line
+                      key={s.id}
+                      type="monotone"
+                      dataKey={s.id}
+                      stroke={s.color}
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#fff', strokeWidth: 2 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      animationDuration={1000}
+                    />
+                  )
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
